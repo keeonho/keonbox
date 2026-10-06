@@ -1,0 +1,535 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>KeonBox</title>
+<meta name="description" content="Get to know KeonBox: fragile boxes since 2026. Open a blindbox and see who you get.">
+<meta name="theme-color" content="#a6dcf3">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%238fd0ee'/%3E%3Cpath d='M16 6l2.6 7.4L26 16l-7.4 2.6L16 26l-2.6-7.4L6 16l7.4-2.6z' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Cherry+Bomb+One&family=Fredoka:wght@500;600;700&family=M+PLUS+Rounded+1c:wght@700;800&display=swap" rel="stylesheet">
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
+<style>
+:root{
+  --sky1:#d8f2fd; --sky2:#9fd8f3; --blue:#8fd0ee; --mid:#5fb8e3; --deep:#2b86bd; --ink:#1d5f8a; --white:#fff;
+  --soft:0 14px 30px rgba(43,134,189,.22);
+  --gutter:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--sky2);-webkit-text-size-adjust:100%}
+html.lenis,html.lenis body{height:auto}
+.lenis.lenis-smooth{scroll-behavior:auto!important}
+body{min-height:100dvh;overflow-x:hidden;color:var(--ink);font-family:Fredoka,system-ui,sans-serif;font-weight:500;
+  background:linear-gradient(180deg,var(--sky1) 0%,var(--sky2) 30%,#c4e8f8 55%,var(--sky2) 80%,var(--sky1) 100%)}
+img,video,canvas{display:block;max-width:100%}
+button{font:inherit;cursor:pointer;color:inherit;border:0;background:none}
+.ic{width:1em;height:1em;flex:none}
+/* soft grain like their edits */
+body::after{content:"";position:fixed;inset:0;z-index:90;pointer-events:none;opacity:.08;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* ---------- keonbox visual language ---------- */
+.bub{font-family:"Cherry Bomb One",Fredoka,sans-serif;font-weight:400;color:var(--white);line-height:.95;letter-spacing:.01em;
+  -webkit-text-stroke:7px var(--blue);paint-order:stroke fill;text-shadow:0 5px 0 var(--mid),0 12px 22px rgba(43,134,189,.25)}
+.logo{font-family:Fredoka,sans-serif;font-weight:700;color:var(--white);line-height:.9;letter-spacing:-.02em;
+  -webkit-text-stroke:3px var(--blue);paint-order:stroke fill;text-shadow:0 6px 0 var(--mid),0 16px 30px rgba(43,134,189,.3)}
+.jp{font-family:"M PLUS Rounded 1c",sans-serif;font-weight:800;color:var(--white);text-shadow:0 2px 0 var(--mid)}
+.caps{font-family:"Archivo Black",sans-serif;text-transform:uppercase;line-height:1.05;letter-spacing:.01em}
+.stamp-wrap{filter:drop-shadow(0 10px 14px rgba(43,134,189,.3))}
+.stamp{background:#fff;padding:9px;
+  -webkit-mask:linear-gradient(#000 0 0) content-box,radial-gradient(circle,#0000 4.5px,#000 5px) -9px -9px/18px 18px round;
+          mask:linear-gradient(#000 0 0) content-box,radial-gradient(circle,#0000 4.5px,#000 5px) -9px -9px/18px 18px round}
+.stamp img,.stamp video{width:100%;height:100%;object-fit:cover}
+.pill{display:inline-flex;align-items:center;gap:8px;background:#fff;color:var(--deep);border-radius:999px;padding:6px 16px;font-weight:700;box-shadow:var(--soft)}
+.btn{text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:10px;background:#fff;color:var(--deep);border-radius:999px;padding:14px 26px;
+  font-family:Fredoka,sans-serif;font-weight:700;font-size:1.15rem;white-space:nowrap;box-shadow:0 6px 0 var(--mid),var(--soft);
+  transition:translate .18s cubic-bezier(.34,1.56,.64,1),box-shadow .18s}
+.btn:hover{translate:0 -3px;box-shadow:0 9px 0 var(--mid),var(--soft)}
+.btn:active{translate:0 4px;box-shadow:0 2px 0 var(--mid),var(--soft)}
+.btn:focus-visible,.chip:focus-visible,.card:focus-visible{outline:3px solid var(--deep);outline-offset:3px}
+.twinkle{position:absolute;color:#fff;animation:tw 2.4s ease-in-out infinite;pointer-events:none;filter:drop-shadow(0 2px 4px rgba(43,134,189,.3))}
+@keyframes tw{0%,100%{scale:.6;rotate:0deg;opacity:.6}50%{scale:1.1;rotate:25deg;opacity:1}}
+.float{animation:fl 4s ease-in-out infinite}
+@keyframes fl{0%,100%{translate:0 0}50%{translate:0 -14px}}
+.jelly:hover{animation:jelly .6s}
+@keyframes jelly{0%{scale:1 1}30%{scale:1.08 .92}50%{scale:.94 1.06}70%{scale:1.03 .97}100%{scale:1 1}}
+.cloud{position:absolute;color:#fff;opacity:.85;pointer-events:none;animation:drift linear infinite}
+@keyframes drift{from{translate:-30vw 0}to{translate:130vw 0}}
+.sec-title{text-align:center;font-size:clamp(3.2rem,14vw,7rem)}
+.sec-jp{display:block;text-align:center;font-size:.95rem;margin-top:10px}
+
+/* ---------- intro: tap the box ---------- */
+#intro{position:fixed;inset:0;z-index:80;display:grid;place-items:center;align-content:center;gap:26px;padding:var(--gutter);text-align:center;
+  background:linear-gradient(180deg,var(--sky1),var(--sky2))}
+.ibox{position:relative;width:170px;height:150px;cursor:pointer}
+.ibox .body{position:absolute;inset:34px 8px 0;background:#fff;border-radius:18px;box-shadow:0 10px 0 var(--mid),var(--soft);display:grid;place-items:center;color:var(--blue);font-size:56px}
+.ibox .lid{position:absolute;left:0;right:0;top:12px;height:38px;background:#fff;border-radius:14px;box-shadow:0 6px 0 var(--blue);transform-origin:20% 100%}
+.ibox .lid::after{content:"";position:absolute;left:50%;top:-22px;width:46px;height:24px;translate:-50% 0;border:7px solid var(--blue);border-bottom:0;border-radius:24px 24px 0 0}
+#intro .logo{font-size:clamp(3.4rem,15vw,5.4rem)}
+#intro .tap{font-weight:700;color:var(--deep);display:flex;gap:8px;align-items:center;justify-content:center;font-size:1.1rem}
+#intro .tap .ic{font-size:24px}
+
+/* ---------- hero ---------- */
+#hero{position:relative;min-height:100dvh;max-width:1240px;margin:0 auto;padding:64px var(--gutter) 60px;display:grid;gap:22px;align-items:center;overflow:visible}
+.hero-copy{position:relative;z-index:2}
+.hero-copy .logo{font-size:clamp(4.6rem,22vw,10rem)}
+.hero-copy .jp{font-size:clamp(1rem,4.2vw,1.35rem);margin-top:14px;display:block;color:var(--deep);text-shadow:0 2px 0 #fff}
+.hero-copy .caps{color:var(--mid);font-size:.95rem;margin-top:18px;text-shadow:0 2px 0 #fff}
+.hero-copy .btn{margin-top:26px}
+.oval{position:relative;width:min(80vw,440px);aspect-ratio:7/8;justify-self:center}
+.oval .ring{position:absolute;inset:-12px;border-radius:50%;background:#fff;box-shadow:var(--soft)}
+.oval .ring::after{content:"";position:absolute;inset:8px;border-radius:50%;border:3px solid #f1e3b4}
+.oval img{position:relative;width:100%;height:100%;object-fit:contain}
+.swirl{position:absolute;inset:0;pointer-events:none;overflow:visible}
+.swirl path{fill:none;stroke:#fff;stroke-width:10;stroke-linecap:round;opacity:.6;stroke-dasharray:1;stroke-dashoffset:1}
+@media (min-width:900px){ #hero{grid-template-columns:1.1fr 1fr} }
+
+/* ---------- new series ---------- */
+#series{position:relative;max-width:1240px;margin:0 auto;padding:90px var(--gutter) 70px}
+.series-top{display:grid;gap:26px;align-items:center;justify-items:center;margin:20px 0 40px}
+.reel{width:min(70vw,300px);aspect-ratio:4/5;rotate:-3deg}
+.reel .stamp{width:100%;height:100%}
+.badge{position:relative;display:grid;place-items:center;width:150px;height:130px;color:#fff;rotate:-8deg}
+.badge .ic{position:absolute;inset:0;width:100%;height:100%}
+.badge span{position:relative;font-family:"Cherry Bomb One";color:var(--blue);font-size:1.25rem;line-height:1;text-align:center}
+.stamps{display:grid;grid-template-columns:repeat(2,1fr);gap:40px 16px}
+.st{position:relative;text-align:center}
+.st .stamp-wrap{aspect-ratio:3/4}
+.st .stamp{width:100%;height:100%}
+.st .nm{position:absolute;left:0;right:0;font-size:clamp(1.6rem,6.5vw,2.2rem);-webkit-text-stroke:5px var(--blue);text-shadow:0 3px 0 var(--mid);z-index:2}
+.st:nth-child(odd) .nm{top:-18px} .st:nth-child(even) .nm{bottom:-14px}
+@media (min-width:640px){ .stamps{grid-template-columns:repeat(4,1fr)} }
+@media (min-width:900px){ .series-top{grid-template-columns:1fr auto 1fr} .stamps{grid-template-columns:repeat(4,1fr);gap:64px 40px;max-width:900px;margin:0 auto} }
+
+/* ---------- get to know ---------- */
+#know{position:relative;max-width:1240px;margin:0 auto;padding:90px var(--gutter) 70px}
+.frame{position:relative;border:4px solid #fff;border-radius:6px;padding:34px 14px 26px;margin-top:-34px}
+.know-head{position:relative;z-index:2;text-align:center}
+.know-head .small{display:block;font-size:clamp(1.8rem,8vw,3rem)}
+.know-head .big{display:block;font-size:clamp(3.4rem,16vw,7.4rem);margin-top:-6px}
+.chips{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin:8px 0 28px}
+.chip{background:rgba(255,255,255,.55);color:var(--deep);border-radius:999px;padding:8px 18px;font-weight:700;font-size:1rem;transition:background .2s,scale .2s}
+.chip[aria-pressed="true"]{background:#fff;box-shadow:0 4px 0 var(--mid);scale:1.05}
+.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:22px 14px}
+.card{text-align:left;display:block;width:100%}
+.card .ph{aspect-ratio:3/4;overflow:hidden;background:#ddd;box-shadow:var(--soft)}
+.card .ph img{width:100%;height:100%;object-fit:cover;transition:scale .5s cubic-bezier(.34,1.56,.64,1)}
+.card:hover .ph img{scale:1.06}
+.card .nm{display:block;text-align:center;font-size:clamp(1.7rem,7.5vw,2.6rem);-webkit-text-stroke:5px var(--blue);margin:10px 0 6px}
+.card .caps{color:var(--deep);font-size:clamp(.72rem,3vw,.95rem)}
+.card.hide{display:none}
+@media (min-width:760px){ .cards{grid-template-columns:repeat(4,1fr);gap:30px 22px} .frame{padding:46px 30px 34px} }
+.jp-strip{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 12px;margin-top:30px;font-size:clamp(.8rem,3.4vw,1.05rem)}
+.jp-strip span+span::before{content:"|";margin-right:12px;opacity:.7}
+
+/* ---------- how it works (chat bubbles) ---------- */
+#how{position:relative;max-width:980px;margin:0 auto;padding:90px var(--gutter) 70px}
+.chat{display:grid;gap:30px;margin-top:34px}
+.msg{position:relative;display:flex;align-items:center;gap:14px;max-width:560px}
+.msg.r{flex-direction:row-reverse;margin-left:auto;text-align:right}
+.msg .av{width:72px;height:72px;border-radius:50%;overflow:hidden;flex:none;border:4px solid #fff;box-shadow:var(--soft)}
+.msg .av img{width:100%;height:100%;object-fit:cover}
+.msg .who{position:absolute;top:-22px;background:#fff;color:var(--blue);border-radius:999px;padding:3px 16px;font-family:"Archivo Black";font-size:.85rem;letter-spacing:.02em}
+.msg:not(.r) .who{left:92px} .msg.r .who{right:92px}
+.msg .b{position:relative;background:#fff;border-radius:28px;padding:16px 22px;color:var(--blue);font-weight:700;font-size:clamp(1.15rem,4.8vw,1.55rem);line-height:1.15;box-shadow:var(--soft);min-height:62px;display:flex;align-items:center}
+.msg .b::before{content:"";position:absolute;bottom:-2px;width:26px;height:26px;background:#fff;border-radius:0 0 0 22px}
+.msg:not(.r) .b::before{left:-10px;transform:scaleX(-1)} .msg.r .b::before{right:-10px}
+.dots{display:inline-flex;gap:6px}
+.dots i{width:10px;height:10px;border-radius:50%;background:var(--blue);animation:dot 1s infinite}
+.dots i:nth-child(2){animation-delay:.15s}.dots i:nth-child(3){animation-delay:.3s}
+@keyframes dot{0%,100%{translate:0 0;opacity:.5}50%{translate:0 -6px;opacity:1}}
+.prizes{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:46px;background:#fff;border-radius:34px;padding:20px 14px;box-shadow:var(--soft)}
+.prize{text-align:center;color:var(--blue)}
+.prize .ic{font-size:clamp(46px,13vw,70px);margin:0 auto 6px;display:block}
+.prize b{font-family:"Cherry Bomb One";font-weight:400;font-size:clamp(1.2rem,5vw,1.7rem);display:block}
+.prize small{font-size:.85rem;line-height:1.15;display:block;margin-top:4px;color:var(--mid)}
+
+/* ---------- blindbox ---------- */
+#blindbox{position:relative;min-height:100dvh;padding:90px var(--gutter) 110px;max-width:1100px;margin:0 auto;text-align:center}
+#blindbox .sec-title{font-size:clamp(2.8rem,12vw,6rem);max-width:13ch;margin:0 auto}
+.boxstage{position:relative;height:min(56dvh,480px);min-height:320px;margin:10px auto 0;max-width:620px}
+.boxstage canvas{position:absolute;inset:0;width:100%!important;height:100%!important;cursor:pointer;touch-action:pan-y}
+.boxstage .shadow{position:absolute;left:50%;bottom:12%;width:44%;height:22px;translate:-50% 0;background:radial-gradient(closest-side,rgba(43,134,189,.35),transparent);border-radius:50%}
+.result{position:fixed;inset:0;z-index:70;display:none;place-items:center;align-content:center;gap:16px;padding:var(--gutter);background:rgba(169,221,244,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.result.on{display:grid}
+.rcard{position:relative;width:min(80vw,330px);background:#fff;border-radius:30px;padding:16px 16px 22px;box-shadow:0 10px 0 var(--mid),0 30px 60px rgba(43,134,189,.35);text-align:center}
+.rcard .stamp-wrap{aspect-ratio:3/4}
+.rcard .stamp{width:100%;height:100%;background:var(--sky1)}
+.rcard .got{display:block;color:var(--mid);font-weight:700;margin:12px 0 2px}
+.rcard .nm{font-size:clamp(2.6rem,12vw,3.4rem)}
+.rcard .caps{color:var(--deep);font-size:.9rem;margin-top:10px}
+.rcard .new{position:absolute;top:-16px;right:-10px;rotate:10deg;background:var(--deep);color:#fff;border-radius:999px;padding:6px 14px;font-family:"Archivo Black";font-size:.85rem}
+.rbtns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.btn.ghost{background:transparent;color:#fff;box-shadow:inset 0 0 0 3px #fff}
+.coll{margin-top:34px}
+.coll h3{font-family:"Cherry Bomb One";font-weight:400;color:#fff;-webkit-text-stroke:5px var(--blue);paint-order:stroke fill;font-size:clamp(1.6rem,6vw,2.2rem)}
+.slots{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;max-width:520px;margin:16px auto 0}
+.slot{aspect-ratio:3/4;border-radius:10px;background:rgba(255,255,255,.5);display:grid;place-items:center;color:#fff;font-size:26px;overflow:hidden;border:3px solid #fff}
+.slot img{width:100%;height:100%;object-fit:cover}
+footer{text-align:center;padding:30px var(--gutter) 60px;position:relative}
+footer .cat{font-size:80px;color:#fff;margin:0 auto 10px;display:block}
+footer .caps{color:#fff;font-size:.9rem;text-shadow:0 1px 0 var(--mid)}
+
+@media (prefers-reduced-motion:reduce){
+  .twinkle,.float,.cloud,.dots i,.jelly:hover{animation:none}
+  .swirl path{stroke-dashoffset:0}
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="i-arrow-counter-clockwise" viewBox="0 0 256 256" fill="currentColor"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L60.63,81.29l17,17A8,8,0,0,1,72,112H24a8,8,0,0,1-8-8V56A8,8,0,0,1,29.66,50.3L49.31,70,60.25,60A96,96,0,0,1,224,128Z"/></symbol><symbol id="i-cat" viewBox="0 0 256 256" fill="currentColor"><path d="M222.83,33.54a16,16,0,0,0-18.14,3.15c-.14.14-.26.27-.38.41L187.05,57A111.28,111.28,0,0,0,69,57L51.69,37.1c-.12-.14-.24-.27-.38-.41a16,16,0,0,0-18.14-3.15A16.4,16.4,0,0,0,24,48.46V136c0,49,40.06,89.63,91.56,95.32a4,4,0,0,0,4.44-4v-32l-13.42-13.43a8.22,8.22,0,0,1-.41-11.37,8,8,0,0,1,11.49-.18L128,180.68l10.34-10.35a8,8,0,0,1,11.49.18,8.22,8.22,0,0,1-.41,11.37L136,195.31v32a4,4,0,0,0,4.44,4C191.94,225.62,232,185,232,136V48.46A16.4,16.4,0,0,0,222.83,33.54ZM84,152a12,12,0,1,1,12-12A12,12,0,0,1,84,152Zm20-64a8,8,0,1,1-16,0V69a8,8,0,0,1,16,0Zm32,0a8,8,0,1,1-16,0V64a8,8,0,0,1,16,0Zm16,0V69a8,8,0,0,1,16,0V88a8,8,0,1,1-16,0Zm20,64a12,12,0,1,1,12-12A12,12,0,0,1,172,152Z"/></symbol><symbol id="i-cloud" viewBox="0 0 256 256" fill="currentColor"><path d="M160.06,40A88.1,88.1,0,0,0,81.29,88.67h0A87.48,87.48,0,0,0,72,127.73,8.18,8.18,0,0,1,64.57,136,8,8,0,0,1,56,128a103.66,103.66,0,0,1,5.34-32.92,4,4,0,0,0-4.75-5.18A64.09,64.09,0,0,0,8,152c0,35.19,29.75,64,65,64H160a88.09,88.09,0,0,0,87.93-91.48C246.11,77.54,207.07,40,160.06,40Z"/></symbol><symbol id="i-coins" viewBox="0 0 256 256" fill="currentColor"><path d="M184,89.57V84c0-25.08-37.83-44-88-44S8,58.92,8,84v40c0,20.89,26.25,37.49,64,42.46V172c0,25.08,37.83,44,88,44s88-18.92,88-44V132C248,111.3,222.58,94.68,184,89.57ZM56,146.87C36.41,141.4,24,132.39,24,124V109.93c8.16,5.78,19.09,10.44,32,13.57Zm80-23.37c12.91-3.13,23.84-7.79,32-13.57V124c0,8.39-12.41,17.4-32,22.87Zm-16,71.37C100.41,189.4,88,180.39,88,172v-4.17c2.63.1,5.29.17,8,.17,3.88,0,7.67-.13,11.39-.35A121.92,121.92,0,0,0,120,171.41Zm0-44.62A163,163,0,0,1,96,152a163,163,0,0,1-24-1.75V126.46A183.74,183.74,0,0,0,96,128a183.74,183.74,0,0,0,24-1.54Zm64,48a165.45,165.45,0,0,1-48,0V174.4a179.48,179.48,0,0,0,24,1.6,183.74,183.74,0,0,0,24-1.54ZM232,172c0,8.39-12.41,17.4-32,22.87V171.5c12.91-3.13,23.84-7.79,32-13.57Z"/></symbol><symbol id="i-gift" viewBox="0 0 256 256" fill="currentColor"><path d="M216,72H180.92c.39-.33.79-.65,1.17-1A29.53,29.53,0,0,0,192,49.57,32.62,32.62,0,0,0,158.44,16,29.53,29.53,0,0,0,137,25.91a54.94,54.94,0,0,0-9,14.48,54.94,54.94,0,0,0-9-14.48A29.53,29.53,0,0,0,97.56,16,32.62,32.62,0,0,0,64,49.57,29.53,29.53,0,0,0,73.91,71c.38.33.78.65,1.17,1H40A16,16,0,0,0,24,88v32a16,16,0,0,0,16,16v64a16,16,0,0,0,16,16h60a4,4,0,0,0,4-4V120H40V88h80v32h16V88h80v32H136v92a4,4,0,0,0,4,4h60a16,16,0,0,0,16-16V136a16,16,0,0,0,16-16V88A16,16,0,0,0,216,72ZM84.51,59a13.69,13.69,0,0,1-4.5-10A16.62,16.62,0,0,1,96.59,32h.49a13.69,13.69,0,0,1,10,4.5c8.39,9.48,11.35,25.2,12.39,34.92C109.71,70.39,94,67.43,84.51,59Zm87,0c-9.49,8.4-25.24,11.36-35,12.4C137.7,60.89,141,45.5,149,36.51a13.69,13.69,0,0,1,10-4.5h.49A16.62,16.62,0,0,1,176,49.08,13.69,13.69,0,0,1,171.49,59Z"/></symbol><symbol id="i-hand-tap" viewBox="0 0 256 256" fill="currentColor"><path d="M64,64a48,48,0,0,1,96,0,8,8,0,0,1-16,0,32,32,0,0,0-64,0,8,8,0,0,1-16,0Zm143.23,56c-8.61.4-15.23,7.82-15.23,16.43v7.28a8.17,8.17,0,0,1-7.47,8.25,8,8,0,0,1-8.53-8V120.45c0-8.61-6.62-16-15.23-16.43A16,16,0,0,0,144,120v15.73a8.17,8.17,0,0,1-7.47,8.25,8,8,0,0,1-8.53-8V64.45c0-8.61-6.62-16-15.23-16.43A16,16,0,0,0,96,64V183.74a8.19,8.19,0,0,1-6.72,8.16l-.12,0a6.09,6.09,0,0,1-6-3.09l-21-36.44c-4.3-7.46-13.74-10.57-21.4-6.62A16,16,0,0,0,34.15,168L65.1,228.05A8,8,0,0,0,72,232H208a8,8,0,0,0,7.16-4.42c.36-.72,8.84-15.06,8.84-40.65V136A16,16,0,0,0,207.23,120Z"/></symbol><symbol id="i-heart" viewBox="0 0 256 256" fill="currentColor"><path d="M240,102c0,70-103.79,126.66-108.21,129a8,8,0,0,1-7.58,0C119.79,228.66,16,172,16,102A62.07,62.07,0,0,1,78,40c20.65,0,38.73,8.88,50,23.89C139.27,48.88,157.35,40,178,40A62.07,62.07,0,0,1,240,102Z"/></symbol><symbol id="i-moon" viewBox="0 0 256 256" fill="currentColor"><path d="M235.54,150.21a104.84,104.84,0,0,1-37,52.91A104,104,0,0,1,32,120,103.09,103.09,0,0,1,52.88,57.48a104.84,104.84,0,0,1,52.91-37,8,8,0,0,1,10,10,88.08,88.08,0,0,0,109.8,109.8,8,8,0,0,1,10,10Z"/></symbol><symbol id="i-package" viewBox="0 0 256 256" fill="currentColor"><path d="M223.68,66.15,135.68,18a15.88,15.88,0,0,0-15.36,0l-88,48.17a16,16,0,0,0-8.32,14v95.64a16,16,0,0,0,8.32,14l88,48.17a15.88,15.88,0,0,0,15.36,0l88-48.17a16,16,0,0,0,8.32-14V80.18A16,16,0,0,0,223.68,66.15ZM128,32l80.35,44L178.57,92.29l-80.35-44Zm0,88L47.65,76,81.56,57.43l80.35,44Zm88,55.85h0l-80,43.79V133.83l32-17.51V152a8,8,0,0,0,16,0V107.56l32-17.51v85.76Z"/></symbol><symbol id="i-question" viewBox="0 0 256 256" fill="currentColor"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,168a12,12,0,1,1,12-12A12,12,0,0,1,128,192Zm8-48.72V144a8,8,0,0,1-16,0v-8a8,8,0,0,1,8-8c13.23,0,24-9,24-20s-10.77-20-24-20-24,9-24,20v4a8,8,0,0,1-16,0v-4c0-19.85,17.94-36,40-36s40,16.15,40,36C168,125.38,154.24,139.93,136,143.28Z"/></symbol><symbol id="i-shooting-star" viewBox="0 0 256 256" fill="currentColor"><path d="M235.24,84.38l-28.06,23.68,8.56,35.39a13.34,13.34,0,0,1-5.09,13.91,13.54,13.54,0,0,1-15,.69L164,139l-31.65,19.06a13.51,13.51,0,0,1-15-.69,13.32,13.32,0,0,1-5.1-13.91l8.56-35.39L92.76,84.38a13.39,13.39,0,0,1,7.66-23.58l36.94-2.92,14.21-33.66a13.51,13.51,0,0,1,24.86,0l14.21,33.66,36.94,2.92a13.39,13.39,0,0,1,7.66,23.58ZM88.11,111.89a8,8,0,0,0-11.32,0L18.34,170.34a8,8,0,0,0,11.32,11.32l58.45-58.45A8,8,0,0,0,88.11,111.89Zm-.5,61.19L34.34,226.34a8,8,0,0,0,11.32,11.32l53.26-53.27a8,8,0,0,0-11.31-11.31Zm73-1-54.29,54.28a8,8,0,0,0,11.32,11.32l54.28-54.28a8,8,0,0,0-11.31-11.32Z"/></symbol><symbol id="i-sparkle" viewBox="0 0 256 256" fill="currentColor"><path d="M208,144a15.78,15.78,0,0,1-10.42,14.94L146,178l-19,51.62a15.92,15.92,0,0,1-29.88,0L78,178l-51.62-19a15.92,15.92,0,0,1,0-29.88L78,110l19-51.62a15.92,15.92,0,0,1,29.88,0L146,110l51.62,19A15.78,15.78,0,0,1,208,144ZM152,48h16V64a8,8,0,0,0,16,0V48h16a8,8,0,0,0,0-16H184V16a8,8,0,0,0-16,0V32H152a8,8,0,0,0,0,16Zm88,32h-8V72a8,8,0,0,0-16,0v8h-8a8,8,0,0,0,0,16h8v8a8,8,0,0,0,16,0V96h8a8,8,0,0,0,0-16Z"/></symbol><symbol id="i-speaker-high" viewBox="0 0 256 256" fill="currentColor"><path d="M160,32.25V223.69a8.29,8.29,0,0,1-3.91,7.18,8,8,0,0,1-9-.56l-65.57-51A4,4,0,0,1,80,176.16V79.84a4,4,0,0,1,1.55-3.15l65.57-51a8,8,0,0,1,10,.16A8.27,8.27,0,0,1,160,32.25ZM60,80H32A16,16,0,0,0,16,96v64a16,16,0,0,0,16,16H60a4,4,0,0,0,4-4V84A4,4,0,0,0,60,80Zm126.77,20.84a8,8,0,0,0-.72,11.3,24,24,0,0,1,0,31.72,8,8,0,1,0,12,10.58,40,40,0,0,0,0-52.88A8,8,0,0,0,186.74,100.84Zm40.89-26.17a8,8,0,1,0-11.92,10.66,64,64,0,0,1,0,85.34,8,8,0,1,0,11.92,10.66,80,80,0,0,0,0-106.66Z"/></symbol><symbol id="i-speaker-slash" viewBox="0 0 256 256" fill="currentColor"><path d="M213.92,210.62a8,8,0,1,1-11.84,10.76L160,175.09v48.6a8.29,8.29,0,0,1-3.91,7.18,8,8,0,0,1-9-.56l-65.55-51A4,4,0,0,1,80,176.18V87.09L42.08,45.38A8,8,0,1,1,53.92,34.62Zm-27.21-55.46a8,8,0,0,0,11.29-.7,40,40,0,0,0,0-52.88,8,8,0,1,0-12,10.57,24,24,0,0,1,0,31.72A8,8,0,0,0,186.71,155.16Zm40.92-80.49a8,8,0,1,0-11.92,10.66,64,64,0,0,1,0,85.34,8,8,0,1,0,11.92,10.66,80,80,0,0,0,0-106.66ZM153,119.87a4,4,0,0,0,7-2.7V32.25a8.27,8.27,0,0,0-2.88-6.4,8,8,0,0,0-10-.16L103.83,59.33a4,4,0,0,0-.5,5.85ZM60,80H32A16,16,0,0,0,16,96v64a16,16,0,0,0,16,16H60a4,4,0,0,0,4-4V84A4,4,0,0,0,60,80Z"/></symbol><symbol id="i-star" viewBox="0 0 256 256" fill="currentColor"><path d="M234.29,114.85l-45,38.83L203,211.75a16.4,16.4,0,0,1-24.5,17.82L128,198.49,77.47,229.57A16.4,16.4,0,0,1,53,211.75l13.76-58.07-45-38.83A16.46,16.46,0,0,1,31.08,86l59-4.76,22.76-55.08a16.36,16.36,0,0,1,30.27,0l22.75,55.08,59,4.76a16.46,16.46,0,0,1,9.37,28.86Z"/></symbol><symbol id="i-x" viewBox="0 0 256 256" fill="currentColor"><path d="M208,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM181.66,170.34a8,8,0,0,1-11.32,11.32L128,139.31,85.66,181.66a8,8,0,0,1-11.32-11.32L116.69,128,74.34,85.66A8,8,0,0,1,85.66,74.34L128,116.69l42.34-42.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></symbol></svg>
+
+<div id="intro">
+  <div class="ibox" id="ibox" role="button" tabindex="0" aria-label="Open the box">
+    <div class="body"><svg class="ic"><use href="#i-star"/></svg></div>
+    <div class="lid"></div>
+  </div>
+  <div class="logo">KeonBox</div>
+  <div class="tap"><svg class="ic"><use href="#i-hand-tap"/></svg>tap the box to open</div>
+</div>
+
+<!-- drifting clouds, behind everything -->
+<div aria-hidden="true" style="position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none">
+  <svg class="cloud" style="top:12%;width:220px;animation-duration:70s;animation-delay:-20s"><use href="#i-cloud"/></svg>
+  <svg class="cloud" style="top:48%;width:320px;animation-duration:95s;animation-delay:-60s"><use href="#i-cloud"/></svg>
+  <svg class="cloud" style="top:78%;width:180px;animation-duration:60s;animation-delay:-5s"><use href="#i-cloud"/></svg>
+</div>
+
+<main>
+  <!-- HERO -->
+  <section id="hero">
+    <svg class="swirl" viewBox="0 0 1000 800" preserveAspectRatio="none" aria-hidden="true">
+      <path pathLength="1" d="M620 60 C 880 40, 980 220, 860 330 C 760 420, 600 330, 660 240 C 700 180, 800 210, 790 270"/>
+      <path pathLength="1" d="M60 640 C 20 520, 140 430, 240 480 C 330 525, 300 640, 200 640 C 140 640, 130 580, 170 560"/>
+    </svg>
+    <div class="hero-copy">
+      <h1 class="logo h-in">KeonBox</h1>
+      <span class="jp h-in">「これは僕く、壊れやすいもの。」</span>
+      <p class="caps h-in">fragile boxes<br>since 2026<br>ahn keonho</p>
+      <a class="btn jelly h-in" href="#blindbox" data-go="#blindbox"><svg class="ic"><use href="#i-package"/></svg>open a blindbox</a>
+    </div>
+    <div class="oval float h-in" aria-hidden="true">
+      <div class="ring"></div>
+      <img src="img/chibi.webp" alt="">
+      <svg class="twinkle ic" style="left:-6%;top:10%;font-size:34px"><use href="#i-sparkle"/></svg>
+      <svg class="twinkle ic" style="right:-4%;top:30%;font-size:26px;animation-delay:-.8s"><use href="#i-star"/></svg>
+      <svg class="twinkle ic" style="left:8%;bottom:4%;font-size:22px;animation-delay:-1.5s"><use href="#i-sparkle"/></svg>
+    </div>
+  </section>
+
+  <!-- NEW SERIES -->
+  <section id="series" aria-labelledby="series-h">
+    <div class="series-top">
+      <div class="badge float" aria-hidden="true"><svg class="ic"><use href="#i-cloud"/></svg><span>Keonbox<br>media</span></div>
+      <h2 class="bub sec-title rv" id="series-h">New Series</h2>
+      <div class="reel stamp-wrap rv"><div class="stamp"><video id="reel" src="img/keonbox-reel.mp4" poster="img/dreams.webp" muted loop playsinline preload="metadata" aria-label="Clip of every KeonBox member"></video></div></div>
+    </div>
+    <div class="stamps" id="stamps"><div class="st"><span class="bub nm">dreams</span><div class="stamp-wrap jelly"><div class="stamp"><img src="img/dreams.webp" alt="dreams" loading="lazy"></div></div></div><div class="st"><span class="bub nm">euphoria</span><div class="stamp-wrap jelly"><div class="stamp"><img src="img/euphoria.webp" alt="euphoria" loading="lazy"></div></div></div><div class="st"><span class="bub nm">heaven</span><div class="stamp-wrap jelly"><div class="stamp"><img src="img/heaven.webp" alt="heaven" loading="lazy"></div></div></div><div class="st"><span class="bub nm">wonder</span><div class="stamp-wrap jelly"><div class="stamp"><img src="img/wonder.webp" alt="wonder" loading="lazy"></div></div></div><div class="st"><span class="bub nm">daydream</span><div class="stamp-wrap jelly"><div class="stamp"><img src="img/daydream.webp" alt="daydream" loading="lazy"></div></div></div><div class="st"><span class="bub nm">moon</span><div class="stamp-wrap jelly"><div class="stamp"><img src="img/moon.webp" alt="moon" loading="lazy"></div></div></div><div class="st"><span class="bub nm">miracle</span><div class="stamp-wrap jelly"><div class="stamp"><img src="img/miracle.webp" alt="miracle" loading="lazy"></div></div></div><div class="st"><span class="bub nm">wishes</span><div class="stamp-wrap jelly"><div class="stamp"><img src="img/wishes.webp" alt="wishes" loading="lazy"></div></div></div><div class="st"><span class="bub nm">whisper</span><div class="stamp-wrap jelly"><div class="stamp"><img src="img/whisper.webp" alt="whisper" loading="lazy"></div></div></div><div class="st"><span class="bub nm">mirage</span><div class="stamp-wrap jelly"><div class="stamp"><img src="img/mirage.webp" alt="mirage" loading="lazy"></div></div></div><div class="st"><span class="bub nm">snooze</span><div class="stamp-wrap jelly"><div class="stamp"><img src="img/snooze.webp" alt="snooze" loading="lazy"></div></div></div><div class="st"><span class="bub nm">lovelight</span><div class="stamp-wrap jelly"><div class="stamp"><img src="img/lovelight.webp" alt="lovelight" loading="lazy"></div></div></div><div class="st"><span class="bub nm">clouds</span><div class="stamp-wrap jelly"><div class="stamp"><img src="img/clouds.webp" alt="clouds" loading="lazy"></div></div></div><div class="st"><span class="bub nm">azure</span><div class="stamp-wrap jelly"><div class="stamp"><img src="img/azure.webp" alt="azure" loading="lazy"></div></div></div><div class="st"><span class="bub nm">bliss</span><div class="stamp-wrap jelly"><div class="stamp"><img src="img/bliss.webp" alt="bliss" loading="lazy"></div></div></div><div class="st"><span class="bub nm">none</span><div class="stamp-wrap jelly"><div class="stamp"><img src="img/none.webp" alt="none" loading="lazy"></div></div></div></div>
+  </section>
+
+  <!-- GET TO KNOW -->
+  <section id="know" aria-labelledby="know-h">
+    <div class="know-head rv">
+      <h2 id="know-h"><span class="bub small">Get To Know</span><span class="bub big">Keonbox's!</span></h2>
+    </div>
+    <div class="frame">
+      <span class="jp sec-jp" style="margin:0 0 16px">KEONBOX を知ろう!</span>
+      <div class="chips" role="group" aria-label="Filter by type">
+        <button class="chip" type="button" data-f="all" aria-pressed="true">all</button>
+        <button class="chip" type="button" data-f="DREAM" aria-pressed="false">dream</button>
+        <button class="chip" type="button" data-f="BLISS" aria-pressed="false">bliss</button>
+        <button class="chip" type="button" data-f="FANTASY" aria-pressed="false">fantasy</button>
+      </div>
+      <div class="cards" id="cards"><button class="card" type="button" data-t="DREAM"><div class="ph"><img src="img/dreams.webp" alt="dreams" loading="lazy"></div><span class="bub nm">dreams</span><p class="caps">type: DREAM<br>series: 001<br>role: the keeper of dreams!</p></button><button class="card" type="button" data-t="BLISS"><div class="ph"><img src="img/euphoria.webp" alt="euphoria" loading="lazy"></div><span class="bub nm">euphoria</span><p class="caps">type: BLISS<br>series: 002<br>role: the keeper of happiness!</p></button><button class="card" type="button" data-t="BLISS"><div class="ph"><img src="img/heaven.webp" alt="heaven" loading="lazy"></div><span class="bub nm">heaven</span><p class="caps">type: BLISS<br>series: 003<br>role: the keeper of peace!</p></button><button class="card" type="button" data-t="DREAM"><div class="ph"><img src="img/wonder.webp" alt="wonder" loading="lazy"></div><span class="bub nm">wonder</span><p class="caps">type: DREAM<br>series: 004<br>role: the keeper of curiosity!</p></button><button class="card" type="button" data-t="DREAM"><div class="ph"><img src="img/daydream.webp" alt="daydream" loading="lazy"></div><span class="bub nm">daydream</span><p class="caps">type: DREAM<br>series: 005<br>role: the keeper of freedom!</p></button><button class="card" type="button" data-t="FANTASY"><div class="ph"><img src="img/moon.webp" alt="moon" loading="lazy"></div><span class="bub nm">moon</span><p class="caps">type: FANTASY<br>series: 006<br>role: the keeper of night!</p></button><button class="card" type="button" data-t="FANTASY"><div class="ph"><img src="img/miracle.webp" alt="miracle" loading="lazy"></div><span class="bub nm">miracle</span><p class="caps">type: FANTASY<br>series: 007<br>role: the keeper of imagination!</p></button><button class="card" type="button" data-t="FANTASY"><div class="ph"><img src="img/wishes.webp" alt="wishes" loading="lazy"></div><span class="bub nm">wishes</span><p class="caps">type: FANTASY<br>series: 008<br>role: the keeper of hope!</p></button><button class="card" type="button" data-t="FANTASY"><div class="ph"><img src="img/whisper.webp" alt="whisper" loading="lazy"></div><span class="bub nm">whisper</span><p class="caps">type: FANTASY<br>series: 009<br>role: the keeper of secrets!</p></button><button class="card" type="button" data-t="FANTASY"><div class="ph"><img src="img/mirage.webp" alt="mirage" loading="lazy"></div><span class="bub nm">mirage</span><p class="caps">type: FANTASY<br>series: 010<br>role: the keeper of fear!</p></button><button class="card" type="button" data-t="BLISS"><div class="ph"><img src="img/snooze.webp" alt="snooze" loading="lazy"></div><span class="bub nm">snooze</span><p class="caps">type: BLISS<br>series: 011<br>role: the keeper of slumber!</p></button><button class="card" type="button" data-t="DREAM"><div class="ph"><img src="img/lovelight.webp" alt="lovelight" loading="lazy"></div><span class="bub nm">lovelight</span><p class="caps">type: DREAM<br>series: 012<br>role: the keeper of love!</p></button><button class="card" type="button" data-t="DREAM"><div class="ph"><img src="img/clouds.webp" alt="clouds" loading="lazy"></div><span class="bub nm">clouds</span><p class="caps">type: DREAM<br>series: 013<br>role: the keeper of comfort!</p></button><button class="card" type="button" data-t="FANTASY"><div class="ph"><img src="img/azure.webp" alt="azure" loading="lazy"></div><span class="bub nm">azure</span><p class="caps">type: FANTASY<br>series: 014<br>role: the keeper of horizons!</p></button><button class="card" type="button" data-t="BLISS"><div class="ph"><img src="img/bliss.webp" alt="bliss" loading="lazy"></div><span class="bub nm">bliss</span><p class="caps">type: BLISS<br>series: 015<br>role: the keeper of joy!</p></button><button class="card" type="button" data-t="NONE"><div class="ph"><img src="img/none.webp" alt="none" loading="lazy"></div><span class="bub nm">none</span><p class="caps">type: NONE<br>series: NONE<br>role: none!</p></button></div>
+      <div class="jp jp-strip"><span>東京</span><span>日本</span><span>ブラインドボックス</span><span>シリーズ</span><span>キャラクター</span><span>プロフィール</span></div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section id="how" aria-labelledby="how-h">
+    <h2 class="bub sec-title rv" id="how-h" style="font-size:clamp(2.8rem,12vw,6rem)">The Blindboxes</h2>
+    <span class="jp sec-jp rv">最寄りの店舗へお越しください</span>
+    <div class="chat"><div class="msg"><span class="who">HEAVEN</span><div class="av"><img src="img/heaven.webp" alt="" loading="lazy"></div><div class="b" data-text="insert a coin into the machine">insert a coin into the machine</div></div><div class="msg r"><span class="who">EUPHORIA</span><div class="av"><img src="img/euphoria.webp" alt="" loading="lazy"></div><div class="b" data-text="the machine will choose your prize">the machine will choose your prize</div></div><div class="msg"><span class="who">DREAMS</span><div class="av"><img src="img/dreams.webp" alt="" loading="lazy"></div><div class="b" data-text="take the prize waiting for you!">take the prize waiting for you!</div></div><div class="msg r"><span class="who">WONDER</span><div class="av"><img src="img/wonder.webp" alt="" loading="lazy"></div><div class="b" data-text="things you&#x27;ll get when you get a blind box!">things you&#x27;ll get when you get a blind box!</div></div><div class="msg"><span class="who">DAYDREAM</span><div class="av"><img src="img/daydream.webp" alt="" loading="lazy"></div><div class="b" data-text="you&#x27;ll get a figure, house, card, and stickers!">you&#x27;ll get a figure, house, card, and stickers!</div></div><div class="msg r"><span class="who">MOON</span><div class="av"><img src="img/moon.webp" alt="" loading="lazy"></div><div class="b" data-text="playing till u complete the 15/15 collection!">playing till u complete the 15/15 collection!</div></div><div class="msg"><span class="who">WONDER</span><div class="av"><img src="img/wonder.webp" alt="" loading="lazy"></div><div class="b" data-text="wonder&#x27;s the giver! these are the cutest prizes you can win">wonder&#x27;s the giver! these are the cutest prizes you can win</div></div></div>
+    <div class="prizes rv">
+      <div class="prize"><svg class="ic"><use href="#i-star"/></svg><b>Keychain!</b><small>blue shine star keychain, new edition</small></div>
+      <div class="prize"><svg class="ic"><use href="#i-cat"/></svg><b>Plushie!</b><small>a "tiny" kitten plushie, new edition</small></div>
+      <div class="prize"><svg class="ic"><use href="#i-package"/></svg><b>Blindbox!</b><small>keonho new blindbox series</small></div>
+    </div>
+  </section>
+
+  <!-- BLINDBOX -->
+  <section id="blindbox" aria-labelledby="bb-h">
+    <h2 class="bub sec-title rv" id="bb-h">What blindbox did you get?</h2>
+    <div class="boxstage">
+      <div class="shadow"></div>
+      <canvas id="gl" aria-label="A KeonBox blindbox. Tap it to open."></canvas>
+    </div>
+    <button class="btn jelly" id="open" type="button"><svg class="ic"><use href="#i-gift"/></svg>open it!</button>
+    <div class="coll">
+      <h3>your collection <span id="count">0</span>/15</h3>
+      <div class="slots" id="slots"></div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <svg class="ic cat float"><use href="#i-cat"/></svg>
+  <p class="caps">made in japan<br>found your own blindbox</p>
+</footer>
+
+<div class="result" id="result" role="dialog" aria-modal="true" aria-labelledby="r-name">
+  <div class="rcard" id="rcard">
+    <span class="new" id="rnew">new!</span>
+    <div class="stamp-wrap"><div class="stamp"><img id="rimg" src="img/dreams.webp" alt=""></div></div>
+    <span class="got">you got</span>
+    <div class="bub nm" id="r-name">dreams</div>
+    <p class="caps" id="rinfo"></p>
+  </div>
+  <div class="rbtns">
+    <button class="btn" id="again" type="button"><svg class="ic"><use href="#i-arrow-counter-clockwise"/></svg>open another</button>
+    <button class="btn ghost" id="close" type="button">close</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js"></script>
+<script type="module">
+import * as THREE from "three";
+import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
+
+gsap.registerPlugin(ScrollTrigger);
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const rnd = (a, b) => a + Math.random() * (b - a);
+const store = { get: k => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch {} } };
+const M = [{"n": "dreams", "t": "DREAM", "s": "001", "r": "dreams"}, {"n": "euphoria", "t": "BLISS", "s": "002", "r": "happiness"}, {"n": "heaven", "t": "BLISS", "s": "003", "r": "peace"}, {"n": "wonder", "t": "DREAM", "s": "004", "r": "curiosity"}, {"n": "daydream", "t": "DREAM", "s": "005", "r": "freedom"}, {"n": "moon", "t": "FANTASY", "s": "006", "r": "night"}, {"n": "miracle", "t": "FANTASY", "s": "007", "r": "imagination"}, {"n": "wishes", "t": "FANTASY", "s": "008", "r": "hope"}, {"n": "whisper", "t": "FANTASY", "s": "009", "r": "secrets"}, {"n": "mirage", "t": "FANTASY", "s": "010", "r": "fear"}, {"n": "snooze", "t": "BLISS", "s": "011", "r": "slumber"}, {"n": "lovelight", "t": "DREAM", "s": "012", "r": "love"}, {"n": "clouds", "t": "DREAM", "s": "013", "r": "comfort"}, {"n": "azure", "t": "FANTASY", "s": "014", "r": "horizons"}, {"n": "bliss", "t": "BLISS", "s": "015", "r": "joy"}, {"n": "none", "t": "NONE", "s": "NONE", "r": "NONE"}];
+
+/* ---------- smooth scroll ---------- */
+let lenis = null;
+if (!reduce) {
+  lenis = new Lenis({ lerp: 0.1 });
+  lenis.on("scroll", ScrollTrigger.update);
+  gsap.ticker.add(t => lenis.raf(t * 1000));
+  gsap.ticker.lagSmoothing(0);
+  lenis.stop();
+}
+$$("[data-go]").forEach(a => a.addEventListener("click", e => { e.preventDefault(); lenis ? lenis.scrollTo(a.dataset.go, { duration: 1.6 }) : $(a.dataset.go).scrollIntoView(); }));
+
+/* ---------- star burst (DOM), used by the intro and the result card ---------- */
+function burst(x, y, n = 18) {
+  if (reduce) return;
+  for (let i = 0; i < n; i++) {
+    const s = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    s.setAttribute("class", "ic"); s.innerHTML = `<use href="#i-${i % 3 ? "star" : "sparkle"}"/>`;
+    s.style.cssText = `position:fixed;left:${x}px;top:${y}px;z-index:95;color:${i % 4 ? "#fff" : "#5fb8e3"};font-size:${rnd(14, 30)}px;pointer-events:none;filter:drop-shadow(0 2px 3px rgba(43,134,189,.4))`;
+    document.body.appendChild(s);
+    const a = rnd(0, Math.PI * 2), d = rnd(70, 190);
+    gsap.to(s, { x: Math.cos(a) * d, y: Math.sin(a) * d - 40, rotate: rnd(-200, 200), scale: rnd(0.6, 1.3), duration: rnd(0.7, 1.1), ease: "power3.out", onComplete: () => s.remove() });
+    gsap.to(s, { opacity: 0, duration: 0.4, delay: 0.6 });
+  }
+}
+
+/* ---------- intro: the box wiggles until you tap it ---------- */
+const ibox = $("#ibox");
+const wig = reduce ? null : gsap.timeline({ repeat: -1, repeatDelay: 0.8 })
+  .to(ibox, { rotate: -8, duration: 0.08 }).to(ibox, { rotate: 8, duration: 0.08 }).to(ibox, { rotate: -6, duration: 0.08 }).to(ibox, { rotate: 0, duration: 0.1 });
+let opened = false;
+function openIntro() {
+  if (opened) return; opened = true;
+  wig && wig.kill();
+  const r = ibox.getBoundingClientRect();
+  const tl = gsap.timeline({ onComplete: () => { $("#intro").remove(); lenis && lenis.start(); ScrollTrigger.refresh(); } });
+  tl.to(ibox, { scaleX: 1.15, scaleY: 0.85, duration: 0.15, ease: "power2.in" })
+    .to(ibox, { scaleX: 0.95, scaleY: 1.08, duration: 0.25, ease: "back.out(3)" })
+    .to("#ibox .lid", { rotate: -110, y: -50, x: -30, duration: 0.5, ease: "back.out(1.6)", onStart: () => burst(r.left + r.width / 2, r.top + 20, 26) }, "<")
+    .to("#intro", { opacity: 0, duration: 0.5, ease: "power2.out" }, "+=0.25");
+  if (!reduce) tl.from(".h-in", { opacity: 0, y: 40, scale: 0.9, duration: 0.8, ease: "back.out(1.8)", stagger: 0.08 }, "-=0.35")
+    .to(".swirl path", { strokeDashoffset: 0, duration: 1.6, ease: "power2.inOut", stagger: 0.2 }, "<");
+}
+ibox.addEventListener("click", openIntro);
+ibox.addEventListener("keydown", e => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), openIntro()));
+
+/* ---------- reveals ---------- */
+if (!reduce) {
+  $$(".rv").forEach(el => gsap.from(el, { opacity: 0, y: 40, scale: 0.94, duration: 0.9, ease: "back.out(1.6)",
+    scrollTrigger: { trigger: el, start: "top 88%", toggleActions: "play none none reverse" } }));
+  // stamps drop in like they're being stuck on a page
+  ScrollTrigger.batch(".st", { start: "top 90%", once: true,
+    onEnter: els => gsap.from(els, { opacity: 0, y: -60, rotate: () => rnd(-25, 25), scale: 0.6, duration: 0.9, ease: "elastic.out(1, 0.6)", stagger: 0.07 }) });
+  ScrollTrigger.batch(".card", { start: "top 92%", once: true,
+    onEnter: els => gsap.from(els, { opacity: 0, y: 50, scale: 0.85, duration: 0.8, ease: "back.out(1.8)", stagger: 0.06 }) });
+  gsap.to(".swirl", { yPercent: 18, ease: "none", scrollTrigger: { trigger: "#hero", start: "top top", end: "bottom top", scrub: 1 } });
+}
+$$(".st").forEach((s, i) => (s.style.rotate = (i % 3 === 0 ? -3 : i % 3 === 1 ? 2.5 : -1) + "deg"));
+const reel = $("#reel");
+ScrollTrigger.create({ trigger: reel, start: "top bottom", end: "bottom top", onToggle: s => (s.isActive ? reel.play().catch(() => {}) : reel.pause()) });
+
+/* ---------- get to know: filter by type ---------- */
+$$(".chip").forEach(c => c.addEventListener("click", () => {
+  $$(".chip").forEach(x => x.setAttribute("aria-pressed", x === c));
+  const f = c.dataset.f;
+  const show = $$(".card").filter(k => f === "all" || k.dataset.t === f);
+  $$(".card").forEach(k => k.classList.toggle("hide", !show.includes(k)));
+  if (!reduce) gsap.fromTo(show, { opacity: 0, scale: 0.8, y: 20 }, { opacity: 1, scale: 1, y: 0, duration: 0.5, ease: "back.out(2)", stagger: 0.04 });
+  ScrollTrigger.refresh();
+}));
+$$(".card").forEach(k => k.addEventListener("click", () => {
+  const r = k.querySelector(".ph").getBoundingClientRect(); burst(r.left + r.width / 2, r.top + r.height / 2, 10);
+  if (!reduce) gsap.fromTo(k, { scale: 0.92 }, { scale: 1, duration: 0.6, ease: "elastic.out(1.2, 0.4)" });
+}));
+
+/* ---------- chat: typing dots, then the message ---------- */
+$$(".msg").forEach(m => {
+  const b = m.querySelector(".b"), text = b.dataset.text;
+  const typeIt = () => {
+    b.innerHTML = '<span class="dots"><i></i><i></i><i></i></span>';
+    setTimeout(() => { b.textContent = text; if (!reduce) gsap.fromTo(b, { scale: 0.9 }, { scale: 1, duration: 0.5, ease: "back.out(3)" }); }, reduce ? 0 : 900);
+  };
+  if (reduce) { b.textContent = text; return; }
+  gsap.set(m, { opacity: 0, x: m.classList.contains("r") ? 40 : -40 });
+  ScrollTrigger.create({ trigger: m, start: "top 85%", once: true, onEnter: () =>
+    gsap.to(m, { opacity: 1, x: 0, duration: 0.6, ease: "back.out(1.8)", onStart: typeIt }) });
+});
+
+/* ---------- blindbox (three.js) ---------- */
+const slots = $("#slots");
+let got = new Set(JSON.parse(store.get("kb-got") || "[]"));
+function drawSlots() {
+  slots.innerHTML = M.filter(m => m.t !== "NONE").map(m => got.has(m.n)
+    ? `<div class="slot" title="${m.n}"><img src="img/${m.n}.webp" alt="${m.n}"></div>`
+    : `<div class="slot" aria-label="not collected yet"><svg class="ic"><use href="#i-question"/></svg></div>`).join("");
+  $("#count").textContent = got.size;
+}
+drawSlots();
+
+const box3d = (function () {
+  const canvas = $("#gl"), host = canvas.parentElement;
+  let renderer;
+  try { renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true }); } catch { return null; }
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 50);
+  camera.position.set(0, 1.4, 7.2); camera.lookAt(0, 0.2, 0);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x8fd0ee, 2.2));
+  const sun = new THREE.DirectionalLight(0xffffff, 1.6); sun.position.set(3, 5, 4); scene.add(sun);
+
+  // box art drawn on a canvas: sky blue, white stars, the KeonBox name and a big "?"
+  function face(label, big) {
+    const c = document.createElement("canvas"); c.width = c.height = 512;
+    const x = c.getContext("2d");
+    const g = x.createLinearGradient(0, 0, 0, 512); g.addColorStop(0, "#dff4fd"); g.addColorStop(1, "#8fd0ee");
+    x.fillStyle = g; x.fillRect(0, 0, 512, 512);
+    x.fillStyle = "rgba(255,255,255,.9)";
+    const star = (cx, cy, r) => { x.beginPath(); for (let i = 0; i < 8; i++) { const a = (i * Math.PI) / 4, rr = i % 2 ? r * 0.38 : r; x.lineTo(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr); } x.fill(); };
+    [[70, 80, 26], [440, 110, 18], [90, 430, 20], [430, 420, 30], [260, 60, 12]].forEach(s => star(...s));
+    x.textAlign = "center"; x.textBaseline = "middle"; x.lineJoin = "round";
+    if (big) { x.font = "400 250px 'Cherry Bomb One'"; x.lineWidth = 26; x.strokeStyle = "#5fb8e3"; x.strokeText(big, 256, 250); x.fillStyle = "#fff"; x.fillText(big, 256, 250); }
+    x.font = "700 64px Fredoka"; x.lineWidth = 12; x.strokeStyle = "#5fb8e3"; x.strokeText(label, 256, big ? 430 : 256); x.fillStyle = "#fff"; x.fillText(label, 256, big ? 430 : 256);
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+  }
+  const mat = map => new THREE.MeshStandardMaterial({ map, roughness: 0.55 });
+  const group = new THREE.Group(); scene.add(group);
+  let body, lid;
+  const plain = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5 });
+  document.fonts.load("250px 'Cherry Bomb One'").finally(() => {
+    const front = mat(face("KeonBox", "?")), side = mat(face("壊れやすい")), back = mat(face("2026"));
+    body = new THREE.Mesh(new RoundedBoxGeometry(1.7, 1.5, 1.7, 5, 0.14), [side, side, plain, plain, front, back]);
+    lid = new THREE.Mesh(new RoundedBoxGeometry(1.86, 0.34, 1.86, 5, 0.12), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4 }));
+    lid.position.y = 0.92;
+    const bow = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.07, 16, 40), new THREE.MeshStandardMaterial({ color: 0x5fb8e3, roughness: 0.4 }));
+    bow.position.y = 0.3; lid.add(bow);
+    group.add(body, lid);
+  });
+
+  // star confetti that pops out of the box
+  const starGeo = new THREE.OctahedronGeometry(0.08, 0);
+  const sparks = [];
+  function sparkle() {
+    for (let i = 0; i < 40; i++) {
+      const m = new THREE.Mesh(starGeo, new THREE.MeshStandardMaterial({ color: i % 3 ? 0xffffff : 0x8fd0ee, emissive: 0x335577, roughness: 0.3 }));
+      m.position.set(0, 0.9, 0); m.userData.v = new THREE.Vector3(rnd(-0.06, 0.06), rnd(0.07, 0.15), rnd(-0.06, 0.06)); m.userData.life = 1;
+      scene.add(m); sparks.push(m);
+    }
+  }
+
+  function size() { const w = host.clientWidth, h = host.clientHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+  size(); addEventListener("resize", size);
+
+  let running = false, busy = false, t0 = performance.now();
+  function frame(t) {
+    if (!running) return;
+    requestAnimationFrame(frame);
+    const s = (t - t0) / 1000;
+    if (!busy) { group.rotation.y = Math.sin(s * 0.6) * 0.5; group.position.y = Math.sin(s * 1.8) * 0.08; }
+    for (let i = sparks.length - 1; i >= 0; i--) {
+      const m = sparks[i]; m.position.add(m.userData.v); m.userData.v.y -= 0.004; m.rotation.x += 0.2; m.rotation.y += 0.15; m.userData.life -= 0.012;
+      m.scale.setScalar(Math.max(0, m.userData.life));
+      if (m.userData.life <= 0) { scene.remove(m); m.material.dispose(); sparks.splice(i, 1); }
+    }
+    renderer.render(scene, camera);
+  }
+  ScrollTrigger.create({ trigger: host, start: "top bottom", end: "bottom top", onToggle: st => { running = st.isActive; if (running) requestAnimationFrame(frame); } });
+
+  return {
+    open(done) {
+      if (busy || !lid) return; busy = true;
+      const tl = gsap.timeline({ onComplete: () => { done(); } });
+      tl.to(group.rotation, { y: 0, duration: 0.3, ease: "power2.out" })
+        // shake shake shake
+        .to(group.rotation, { z: 0.12, duration: 0.07, yoyo: true, repeat: 7, ease: "sine.inOut" })
+        .to(group.scale, { x: 1.12, y: 0.86, z: 1.12, duration: 0.14, ease: "power2.in" })
+        .to(group.scale, { x: 1, y: 1, z: 1, duration: 0.5, ease: "elastic.out(1.2, 0.4)" })
+        .to(lid.position, { y: 2.6, x: 0.9, duration: 0.6, ease: "power2.out", onStart: sparkle }, "<")
+        .to(lid.rotation, { z: -1.2, x: 0.5, duration: 0.6, ease: "power2.out" }, "<")
+        .to({}, { duration: 0.25 });
+    },
+    reset() {
+      if (!lid) return;
+      gsap.to(lid.position, { y: 0.92, x: 0, duration: 0.6, ease: "bounce.out" });
+      gsap.to(lid.rotation, { z: 0, x: 0, duration: 0.5, ease: "power2.out", onComplete: () => (busy = false) });
+    },
+  };
+})();
+
+const result = $("#result");
+function reveal() {
+  // 1 in 14 boxes is a zonk, just like the machine
+  const zonk = Math.random() < 1 / 14;
+  const pool = M.filter(m => m.t !== "NONE");
+  const m = zonk ? { n: "zonk!", t: "NONE", s: "NONE", r: "NONE", img: "none" } : pool[(Math.random() * pool.length) | 0];
+  const fresh = !zonk && !got.has(m.n);
+  if (!zonk) { got.add(m.n); store.set("kb-got", JSON.stringify([...got])); drawSlots(); }
+  $("#rimg").src = `img/${m.img || m.n}.webp`;
+  $("#r-name").textContent = m.n;
+  $("#rinfo").innerHTML = zonk ? "better luck next time!<br>try again" : `type: ${m.t}<br>series: ${m.s}<br>role: the keeper of ${m.r}!`;
+  $(".rcard .got").textContent = zonk ? "oh no, it's a" : "you got";
+  $("#rnew").style.display = fresh ? "" : "none";
+  result.classList.add("on");
+  lenis && lenis.stop();
+  $("#again").focus({ preventScroll: true });
+  if (!reduce) {
+    gsap.fromTo("#rcard", { y: 160, scale: 0.4, rotate: -12, opacity: 0 }, { y: 0, scale: 1, rotate: 0, opacity: 1, duration: 0.9, ease: "elastic.out(1, 0.55)" });
+    gsap.from(".rbtns .btn", { opacity: 0, y: 20, duration: 0.4, delay: 0.4, stagger: 0.08, ease: "back.out(2)" });
+    setTimeout(() => { const r = $("#rcard").getBoundingClientRect(); burst(r.left + r.width / 2, r.top + r.height * 0.35, 30); }, 250);
+  }
+}
+function openBox() {
+  if (box3d) box3d.open(reveal); else reveal();
+}
+function closeResult() { result.classList.remove("on"); lenis && lenis.start(); box3d && box3d.reset(); }
+$("#open").addEventListener("click", openBox);
+$("#gl").addEventListener("click", openBox);
+$("#close").addEventListener("click", closeResult);
+$("#again").addEventListener("click", () => { closeResult(); setTimeout(openBox, 700); });
+addEventListener("keydown", e => e.key === "Escape" && result.classList.contains("on") && closeResult());
+
+document.fonts && document.fonts.ready.then(() => ScrollTrigger.refresh());
+</script>
+</body>
+</html>
